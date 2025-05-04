@@ -15,6 +15,8 @@ from modules.data_fetcher import CryptoDataFetcher
 from modules.portfolio_opt import PortfolioOptimizer
 from modules.risk_assessment import RiskAssessor
 from modules.sentiment import SentimentAnalyzer
+from modules.price_prediction import run_price_prediction
+from modules.clustering import run_clustering
 from utils.visualization import (
     plot_price_history, plot_returns_heatmap, plot_portfolio_composition,
     plot_risk_return_scatter, plot_efficient_frontier_with_assets,
@@ -87,7 +89,7 @@ except ImportError:
 # Navigation options
 nav_option = st.sidebar.radio(
     "Navigation",
-    ["🏠 Home", "📊 Portfolio Optimization", "📈 Risk Assessment", "🔍 Market Sentiment", "ℹ️ About"]
+    ["🏠 Home", "📊 Portfolio Optimization", "📈 Risk Assessment", "🔍 Market Sentiment", "🧠 ML Analysis", "ℹ️ About"]
 )
 
 # Sidebar - Help & Info
@@ -98,7 +100,8 @@ with st.sidebar.expander("💡 Help & Tips"):
     2. Choose your analysis timeframe
     3. Optimize your portfolio based on risk/return preferences
     4. Analyze risk metrics and market sentiment
-    5. Download your optimized portfolio allocation
+    5. Use ML tools for price prediction and clustering
+    6. Download your optimized portfolio allocation
     """)
 
 # Main content area
@@ -182,11 +185,10 @@ if nav_option == "🏠 Home":
         """)
         
         st.markdown("""
-        #### 📱 User Experience
-        - Interactive visualizations
-        - Real-time data from CoinGecko API
-        - Downloadable reports and allocations
-        - Educational tooltips and explanations
+        #### 🧠 Machine Learning Analysis
+        - Price prediction with Prophet
+        - Cryptocurrency clustering with K-means
+        - Interactive ML visualizations
         """)
     
     # Get started button
@@ -633,6 +635,188 @@ elif nav_option == "🔍 Market Sentiment":
             if fig:
                 st.plotly_chart(fig, use_container_width=True)
 
+elif nav_option == "🧠 ML Analysis":
+    st.title("🧠 Machine Learning Analysis")
+    
+    # Check if data is available
+    if st.session_state.portfolio_returns is None:
+        st.warning("Please fetch data in the Portfolio Optimization section first.")
+        if st.button("Go to Portfolio Optimization"):
+            st.session_state.nav_option = "📊 Portfolio Optimization"
+            st.experimental_rerun()
+    else:
+        # Get price data
+        price_data = st.session_state.data_fetcher.get_price_data(
+            coin_ids=st.session_state.selected_coins,
+            days=get_timeframe_days("1y")
+        )
+        
+        # ML Analysis tabs
+        ml_tab1, ml_tab2 = st.tabs([
+            "📈 Price Prediction", 
+            "🔍 Crypto Clustering"
+        ])
+        
+        # Price Prediction tab
+        with ml_tab1:
+            st.subheader("Cryptocurrency Price Prediction")
+            st.markdown("""
+            This feature uses Facebook Prophet, a time series forecasting model, to predict future cryptocurrency prices.
+            The model analyzes historical price patterns, seasonality, and trends to make predictions.
+            """)
+            
+            # Select cryptocurrency for prediction
+            coin_id = st.selectbox(
+                "Select cryptocurrency for price prediction:",
+                options=st.session_state.selected_coins,
+                key="prediction_coin"
+            )
+            
+            # Prediction parameters
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                forecast_days = st.slider(
+                    "Forecast Horizon (Days):",
+                    min_value=7,
+                    max_value=90,
+                    value=30,
+                    step=7
+                )
+            
+            with col2:
+                seasonality_mode = st.selectbox(
+                    "Seasonality Mode:",
+                    options=["multiplicative", "additive"],
+                    index=0
+                )
+            
+            # Run prediction
+            if st.button("Run Price Prediction", key="run_prediction"):
+                with st.spinner("Running price prediction model..."):
+                    try:
+                        # Get price data for selected coin
+                        coin_price_data = price_data[[coin_id]]
+                        
+                        # Run price prediction
+                        forecast_fig, components_fig, metrics = run_price_prediction(
+                            price_data=coin_price_data,
+                            coin_id=coin_id,
+                            forecast_days=forecast_days
+                        )
+                        
+                        # Store results in session state
+                        st.session_state.forecast_fig = forecast_fig
+                        st.session_state.components_fig = components_fig
+                        st.session_state.forecast_metrics = metrics
+                        
+                        # Success message
+                        st.success("Price prediction complete!")
+                    except Exception as e:
+                        st.error(f"Error running price prediction: {str(e)}")
+            
+            # Display prediction results
+            if 'forecast_fig' in st.session_state and 'forecast_metrics' in st.session_state:
+                # Display metrics
+                st.subheader("Prediction Metrics")
+                
+                metrics = st.session_state.forecast_metrics
+                
+                # Display metrics in columns
+                metric_col1, metric_col2, metric_col3 = st.columns(3)
+                
+                with metric_col1:
+                    st.metric(
+                        "Forecast End Price",
+                        f"${metrics['forecast_end_price']:.2f}"
+                    )
+                
+                with metric_col2:
+                    st.metric(
+                        "Price Change",
+                        f"${metrics['price_change']:.2f}",
+                        f"{metrics['price_change_pct']:.2f}%"
+                    )
+                
+                with metric_col3:
+                    st.metric(
+                        "Forecast Volatility",
+                        f"{metrics['volatility']:.2f}%"
+                    )
+                
+                # Display forecast plot
+                st.subheader("Price Forecast")
+                st.plotly_chart(st.session_state.forecast_fig, use_container_width=True)
+                
+                # Display components plot
+                st.subheader("Trend Component")
+                st.plotly_chart(st.session_state.components_fig, use_container_width=True)
+        
+        # Crypto Clustering tab
+        with ml_tab2:
+            st.subheader("Cryptocurrency Clustering Analysis")
+            st.markdown("""
+            This feature uses K-means clustering to group cryptocurrencies based on their statistical properties.
+            The algorithm identifies natural groupings of cryptocurrencies with similar characteristics.
+            """)
+            
+            # Clustering parameters
+            n_clusters = st.slider(
+                "Number of Clusters:",
+                min_value=2,
+                max_value=10,
+                value=3,
+                step=1
+            )
+            
+            # Run clustering
+            if st.button("Run Clustering Analysis", key="run_clustering"):
+                with st.spinner("Running clustering analysis..."):
+                    try:
+                        # Run clustering
+                        results, elbow_fig, plot_2d, plot_3d, profiles = run_clustering(
+                            returns_data=st.session_state.portfolio_returns,
+                            n_clusters=n_clusters
+                        )
+                        
+                        # Store results in session state
+                        st.session_state.clustering_results = results
+                        st.session_state.elbow_fig = elbow_fig
+                        st.session_state.cluster_plot_2d = plot_2d
+                        st.session_state.cluster_plot_3d = plot_3d
+                        st.session_state.cluster_profiles = profiles
+                        
+                        # Success message
+                        st.success("Clustering analysis complete!")
+                    except Exception as e:
+                        st.error(f"Error running clustering analysis: {str(e)}")
+            
+            # Display clustering results
+            if 'clustering_results' in st.session_state:
+                # Display elbow method plot
+                st.subheader("Optimal Number of Clusters")
+                st.plotly_chart(st.session_state.elbow_fig, use_container_width=True)
+                
+                # Display 2D cluster plot if available
+                if st.session_state.cluster_plot_2d is not None:
+                    st.subheader("Cryptocurrency Clusters (2D)")
+                    st.plotly_chart(st.session_state.cluster_plot_2d, use_container_width=True)
+                
+                # Display 3D cluster plot if available
+                if st.session_state.cluster_plot_3d is not None:
+                    st.subheader("Cryptocurrency Clusters (3D)")
+                    st.plotly_chart(st.session_state.cluster_plot_3d, use_container_width=True)
+                
+                # Display cluster profiles
+                st.subheader("Cluster Profiles")
+                st.plotly_chart(st.session_state.cluster_profiles, use_container_width=True)
+                
+                # Display clustering results table
+                st.subheader("Clustering Results")
+                st.dataframe(st.session_state.clustering_results)
+        
+        # No Anomaly Detection tab
+
 elif nav_option == "ℹ️ About":
     st.title("ℹ️ About CryptoPortfolio Optimizer")
     
@@ -648,6 +832,7 @@ elif nav_option == "ℹ️ About":
     - **Portfolio Optimization**: Optimize your cryptocurrency portfolio using Modern Portfolio Theory
     - **Risk Assessment**: Analyze portfolio risk using various metrics and Monte Carlo simulation
     - **Market Sentiment Analysis**: Track market sentiment and cryptocurrency-specific sentiment
+    - **Machine Learning Analysis**: Predict prices, cluster cryptocurrencies, and detect anomalies
     - **Real-time Data**: Fetch real-time cryptocurrency data from CoinGecko API
     
     ## Technologies Used
@@ -664,6 +849,7 @@ elif nav_option == "ℹ️ About":
     2. **Portfolio Optimization**: Using Modern Portfolio Theory, the app calculates the optimal portfolio weights
     3. **Risk Assessment**: The app calculates various risk metrics and runs Monte Carlo simulations
     4. **Sentiment Analysis**: The app analyzes market sentiment using Fear & Greed Index and other metrics
+    5. **Machine Learning Analysis**: The app applies ML algorithms for price prediction, clustering, and anomaly detection
     
     ## Disclaimer
     

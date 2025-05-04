@@ -228,3 +228,54 @@ class CryptoDataFetcher:
         except Exception as e:
             print(f"Error fetching market sentiment: {e}")
             return {}
+    
+    def get_price_data(self, coin_ids, days=365, vs_currency='usd'):
+        """
+        Get historical price data for multiple coins
+        
+        Args:
+            coin_ids (list): List of CoinGecko coin IDs
+            days (int): Number of days of historical data
+            vs_currency (str): Currency to get prices in
+            
+        Returns:
+            pandas.DataFrame: DataFrame with historical price data for all coins
+        """
+        if not coin_ids:
+            return pd.DataFrame()
+            
+        cache_key = f"price_data_{'_'.join(sorted(coin_ids))}_{days}_{vs_currency}"
+        
+        # Check if data is in cache and not expired
+        if cache_key in self.cache and self.cache_expiry.get(cache_key, 0) > time.time():
+            return self.cache[cache_key]
+        
+        try:
+            # Create an empty DataFrame to store prices
+            all_prices = pd.DataFrame()
+            
+            # Fetch historical data for each coin
+            for coin_id in coin_ids:
+                coin_data = self.get_coin_history(coin_id, days, vs_currency)
+                if not coin_data.empty:
+                    # Extract price and rename column
+                    prices = coin_data['price'].rename(coin_id)
+                    
+                    # Add to the combined DataFrame
+                    if all_prices.empty:
+                        all_prices = pd.DataFrame(prices)
+                    else:
+                        all_prices = all_prices.join(prices, how='outer')
+            
+            # Fill missing values with forward fill then backward fill
+            all_prices.fillna(method='ffill', inplace=True)
+            all_prices.fillna(method='bfill', inplace=True)
+            
+            # Update cache
+            self.cache[cache_key] = all_prices
+            self.cache_expiry[cache_key] = time.time() + self.cache_duration
+            
+            return all_prices
+        except Exception as e:
+            print(f"Error fetching price data: {e}")
+            return pd.DataFrame()

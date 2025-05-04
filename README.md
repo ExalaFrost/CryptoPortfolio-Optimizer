@@ -24,6 +24,10 @@ CryptoPortfolio Optimizer is a powerful, interactive web application built with 
 - **Sentiment comparison** between different cryptocurrencies
 - **Historical sentiment trends** visualization
 
+### 🤖 **Machine Learning Analysis**
+- **Price Prediction** using Facebook Prophet time series forecasting
+- **Cryptocurrency Clustering** with K-means to identify similar assets
+
 ## 🎨 User Experience Highlights
 
 - 🧭 **Intuitive Navigation**: Easy-to-follow workflows for every task
@@ -36,9 +40,10 @@ CryptoPortfolio Optimizer is a powerful, interactive web application built with 
 
 - **Python 3.9+**
 - **Streamlit**
-- **pandas / numpy**
+- **pandas / numpy / scipy**
 - **plotly**
-- **PyPortfolioOpt**
+- **scikit-learn** (K-means)
+- **Prophet** (Time series forecasting)
 - **CoinGecko API**
 - **streamlit-lottie**
 
@@ -67,7 +72,9 @@ CryptoPortfolio-Optimizer/
 │   ├── data_fetcher.py     # API integration for crypto data
 │   ├── portfolio_opt.py    # Portfolio optimization algorithms
 │   ├── risk_assessment.py  # Risk metrics and simulations
-│   └── sentiment.py        # Sentiment analysis functions
+│   ├── sentiment.py        # Sentiment analysis functions
+│   ├── price_prediction.py # Time series forecasting with Prophet
+│   └── clustering.py       # K-means clustering for cryptocurrencies
 └── utils/                  # Utility functions
     ├── visualization.py    # Plotting functions
     └── helpers.py          # Helper functions
@@ -89,6 +96,9 @@ CryptoPortfolio-Optimizer/
    - Track Fear & Greed Index
    - Analyze cryptocurrency-specific sentiment
    - Compare sentiment across different assets
+5. **ML Analysis**:
+   - Predict future cryptocurrency prices with Prophet
+   - Cluster cryptocurrencies based on statistical properties
 
 ## ⚠️ Disclaimer
 
