@@ -46,7 +46,7 @@ CryptoPortfolio Optimizer is a powerful, interactive web application built with 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/CryptoPortfolio-Optimizer.git
+git clone https://github.com/ExalaFrost/CryptoPortfolio-Optimizer.git
 cd CryptoPortfolio-Optimizer
 
 # Install dependencies
@@ -89,10 +89,6 @@ CryptoPortfolio-Optimizer/
    - Track Fear & Greed Index
    - Analyze cryptocurrency-specific sentiment
    - Compare sentiment across different assets
-
-## 📊 Example Screenshots
-
-(Screenshots would be added here)
 
 ## ⚠️ Disclaimer
 
