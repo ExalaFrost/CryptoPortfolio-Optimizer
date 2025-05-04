@@ -108,10 +108,6 @@ This application is for educational and informational purposes only. It is not f
 
 Contributions, suggestions, and feedback are welcome! Please feel free to submit a pull request or open an issue.
 
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## 📧 Contact
 
 For questions, feedback, or suggestions, please contact:
