@@ -4,6 +4,10 @@ CryptoPortfolio Optimizer is a powerful, interactive web application built with 
 
 ![CryptoPortfolio Optimizer](https://cdn-icons-png.flaticon.com/512/2091/2091665.png)
 
+### 🧠 **Course Context**
+- **Course** AF3005 Programming for Finance
+- **Instructor** Dr Usama Arshad
+
 ## 🔍 Features
 
 ### ✅ **Portfolio Optimization**
